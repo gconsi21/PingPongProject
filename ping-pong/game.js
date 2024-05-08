@@ -2,6 +2,11 @@ import * as THREE from 'https://unpkg.com/three/build/three.module.js';
 //import CANNON from 'https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js';
 
 function init() {
+    const existingCanvas = document.querySelector('canvas');
+    if (existingCanvas) {
+        existingCanvas.parentNode.removeChild(existingCanvas);
+    }
+    
     const clock = new THREE.Clock();
     let scorePlayer1 = 0;
     let scorePlayer2 = 0;
@@ -432,14 +437,25 @@ function backToHome() {
     resetGame(); // This resets the game state
     document.getElementById('startMenu').style.display = 'flex'; // Show the start menu
 }
-document.addEventListener('DOMContentLoaded', () => {
+
+function setupHomeButton() {
+    console.log('Setting up home button');
     const homeButton = document.getElementById('homeButton');
+    console.log('Home Button:', homeButton);
     if (homeButton) {
         homeButton.addEventListener('click', backToHome);
     } else {
-        console.error('Back to Home button not found');
+        console.log('Home button not found');
     }
-});
+}
+
+if (document.readyState === 'loading') {  // Loading hasn't finished yet
+    document.addEventListener('DOMContentLoaded', setupHomeButton);
+} else {  // `DOMContentLoaded` has already fired
+    setupHomeButton();
+}
+
+
 
 
 
