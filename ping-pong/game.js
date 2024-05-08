@@ -11,9 +11,12 @@ function init() {
     camera.position.set(3, 1, 2);
     camera.lookAt(0, 0, 0);
 
-    const renderer = new THREE.WebGLRenderer();
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
     document.body.appendChild(renderer.domElement);
+
 
     const keyStates = {};
 
@@ -52,17 +55,23 @@ loader.load('./beach_background.jpg', function(texture) {
     const rubberGeometry = new THREE.CylinderGeometry(rubberDiameter/2, rubberDiameter/2, rubberThickness, 32);
     const rubber = new THREE.Mesh(rubberGeometry, paddleMaterial);
     rubber.rotation.z = Math.PI / 2;  // Rotate to face along the Z-axis
+    rubber.castShadow = true;  // Enable casting shadows
+    rubber.receiveShadow = true;  // Enable receiving shadows
 
     // Handle
     const handleGeometry = new THREE.CylinderGeometry(handleDiameter/2, handleDiameter/2, handleLength, 32);
     const handle = new THREE.Mesh(handleGeometry, handleMaterial);
     handle.position.y = -handleLength / 2 - rubberThickness / 2;
+    handle.castShadow = true;  // Enable casting shadows
+    handle.receiveShadow = true;  // Enable receiving shadows
 
     // Group for paddle
     const paddle1 = new THREE.Group();
     paddle1.add(rubber);
     paddle1.add(handle);
     paddle1.position.set(-1, 0, 0);
+    paddle1.castShadow = true;  // Enable casting shadows
+    paddle1.receiveShadow = true;  // Enable receiving shadows
 
     const paddle2 = paddle1.clone();
     paddle2.position.set(1, 0, 0);
@@ -84,8 +93,14 @@ loader.load('./beach_background.jpg', function(texture) {
     // Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.75);
-    directionalLight.position.set(1, 1, 1);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    directionalLight.color.setHex(0xfadca7);
+    directionalLight.position.set(-2, 2, -1);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 1024;
+    directionalLight.shadow.mapSize.height = 1024;
+    directionalLight.shadow.camera.near = 0.5;
+    directionalLight.shadow.camera.far = 500;
     scene.add(directionalLight);
 
     // Table setup
@@ -93,7 +108,11 @@ loader.load('./beach_background.jpg', function(texture) {
     const tableWidth = 1.525;
     const tableHeight = 0.76;
     const tableGeometry = new THREE.BoxGeometry(tableLength, 0.05, tableWidth);
-    const tableMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+    const tableMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x228B22,
+        metalness: 0.1,
+        roughness: 0.6 
+    });
     const table = new THREE.Mesh(tableGeometry, tableMaterial);
     table.position.set(0, -tableHeight / 2, 0);
     scene.add(table);
@@ -132,7 +151,11 @@ loader.load('./beach_background.jpg', function(texture) {
     const ballShape = new CANNON.Sphere(ballRadius);
     const ballBody = new CANNON.Body({ mass: 0.1, shape: ballShape });
     const ballGeometry = new THREE.SphereGeometry(ballRadius, 32, 32);
-    const ballMaterial = new THREE.MeshLambertMaterial({ color: 0xFFFFFF });
+    const ballMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0xFFFFFF,
+        specular: 0x111111,
+        shininess: 100 
+    });
     const ball = new THREE.Mesh(ballGeometry, ballMaterial);
     ball.position.set(0, 1, 0);
     scene.add(ball);
@@ -145,6 +168,14 @@ loader.load('./beach_background.jpg', function(texture) {
         ballBody.velocity.scale(ballSpeed, ballBody.velocity); // Scale to desired speed
     }
     });
+
+    // Let the ball cast shadows
+    ball.castShadow = true;
+
+    // Let the table receive shadows
+    table.receiveShadow = true;
+
+
 
 // Assign this material to the ball and paddles
 ballBody.material = bouncyMaterial;
@@ -255,6 +286,10 @@ function checkBallOutOfBounds() {
         // Ball went out on the side of paddle1
         scorePlayer2++;
         resetBallAndPaddles(paddle2); // Reset to the opposite side, which is paddle2
+    } else if (ballBody.position.z > 5) {
+        resetBallAndPaddles(paddle1)
+    } else if (ballBody.position.z < -5) {
+        resetBallAndPaddles(paddle1)
     }
     updateScoreboard();
 }
