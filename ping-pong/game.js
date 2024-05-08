@@ -167,6 +167,7 @@ loader.load('./net.png', function(texture) {
     const net = new THREE.Mesh(netGeometry, netMaterial);
     net.position.set(0, -tableHeight / 2 + netHeight / 2, 0);  // Ensure it's positioned at the middle of the table
     net.rotation.y = Math.PI / 2;
+    net.castShadow = true;
 
     // Add net to scene
     scene.add(net);
