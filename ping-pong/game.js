@@ -6,15 +6,28 @@ function init() {
     if (existingCanvas) {
         existingCanvas.parentNode.removeChild(existingCanvas);
     }
-    
+
     const clock = new THREE.Clock();
     let scorePlayer1 = 0;
     let scorePlayer2 = 0;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(3, 1, 2);
-    camera.lookAt(0, 0, 0);
+    let currentCamera; // This will allow us to switch between cameras
+    const camera1 = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera1.position.set(3, 1, 2);  // Side view
+    camera1.lookAt(new THREE.Vector3(0, 0, 0));
+
+    const camera2 = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera2.position.set(0, 4, 0);  // Top view, looking down
+    camera2.lookAt(new THREE.Vector3(0, 0, 0));
+
+    currentCamera = camera1; // Start with the first camera
+
+    function switchCamera() {
+        currentCamera = (currentCamera === camera1) ? camera2 : camera1;
+        console.log('Camera switched:', currentCamera === camera1 ? 'camera1' : 'camera2');
+    }
+
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -455,25 +468,34 @@ if (document.readyState === 'loading') {  // Loading hasn't finished yet
     setupHomeButton();
 }
 
+document.getElementById('cameraButton').addEventListener('click', function() {
+    switchCamera();
+});
 
-
-
-
-
-
+document.addEventListener('DOMContentLoaded', function() {
+    const cameraButton = document.getElementById('cameraButton');
+    if (cameraButton) {
+        cameraButton.addEventListener('click', switchCamera);
+        console.log('Event listener attached to switch view button.');
+    } else {
+        console.log('Camera button not found.');
+    }
+});
 
 
 function animate() {
     requestAnimationFrame(animate);
+    renderer.render(scene, currentCamera);
     const deltaTime = clock.getDelta();
     updatePaddlePosition(deltaTime);
     updateBallPosition(); // Keep the ball with the paddle until launch
     updatePhysics();
-    renderer.render(scene, camera);
 }
 
     animate();
 }
+
+
 
 document.getElementById('startButton').addEventListener('click', function() {
     document.getElementById('startMenu').style.display = 'none';
