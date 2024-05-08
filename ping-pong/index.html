@@ -20,7 +20,7 @@
         canvas { 
             display: block;
         }
-        #startMenu {
+        #startMenu, #winnerMessage {
             position: absolute;
             width: 100%;
             height: 100%;
@@ -31,7 +31,7 @@
             align-items: center;
             color: white;
         }
-        #startButton, #muteButton, #homeButton {
+        #startButton, #playAgainButton, #muteButton, #homeButton {
             padding: 10px 20px;
             font-size: 16px;
             color: #fff;
@@ -41,7 +41,7 @@
             cursor: pointer;
             outline: none;
         }
-        #startButton:hover, #muteButton:hover, #homeButton:hover {
+        #startButton:hover, #playAgainButton:hover, #muteButton:hover, #homeButton:hover {
             background-color: #0056b3;
         }
         #muteButton, #homeButton {
@@ -55,6 +55,12 @@
         #homeButton {
             right: 200px;
         }
+        #winnerMessage {
+            display: none; /* Hidden by default */
+        }
+        #playAgainButton {
+            display: none; /* Hidden by default */
+        }
     </style>
 </head>
 <body>
@@ -65,10 +71,14 @@
         </audio>
         <button id="startButton">Start Game</button>
     </div>
+    <div id="winnerMessage">
+        <h1 id = "gameWinner"></h1>
+        <button id="playAgainButton" style="display: none;">Play Again</button>
+    </div>
     <button id="homeButton">Back to Home</button>
     <button id="muteButton" onclick="toggleMute()">Mute/Unmute Music</button>
     <div id="scoreboard" style="position: absolute; top: 10px; width: 100%; text-align: center; font-size: 24px; color: white;">
-        Player1:<span id="Player1">0 </span><span id="Player2"> 0</span>:Player2
+        Player1: <span id="Player1">0</span> - <span id="Player2">0</span> : Player2
     </div>
 </body>
 </html>

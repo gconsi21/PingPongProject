@@ -103,15 +103,17 @@ loader.load('./beach_background.jpg', function(texture) {
     directionalLight.shadow.camera.far = 500;
     scene.add(directionalLight);
 
+
+    const tableTexture = loader.load('./table_texture.jpg');
+
     // Table setup
     const tableLength = 2.74;
     const tableWidth = 1.525;
     const tableHeight = 0.76;
     const tableGeometry = new THREE.BoxGeometry(tableLength, 0.05, tableWidth);
-    const tableMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0x228B22,
-        metalness: 0.1,
-        roughness: 0.6 
+    const tableMaterial = new THREE.MeshPhongMaterial({
+        map: tableTexture, // Apply the loaded texture
+        side: THREE.DoubleSide
     });
     const table = new THREE.Mesh(tableGeometry, tableMaterial);
     table.position.set(0, -tableHeight / 2, 0);
@@ -125,6 +127,34 @@ loader.load('./beach_background.jpg', function(texture) {
 
     scene.add(table);
     world.addBody(tableBody);
+
+ // Load the texture with a callback to check if it loads correctly
+loader.load('./net.png', function(texture) {
+    console.log("Texture loaded successfully");
+
+    const netMaterial = new THREE.MeshPhongMaterial({
+        map: texture,
+        transparent: true,
+        opacity: 1,  // Adjust opacity to make sure it's visible
+        side: THREE.DoubleSide
+    });
+
+    // Net dimensions and position adjustment
+    const netHeight = 0.3;  // Adjust as necessary
+    const netWidth = 0.02;
+    const netLength = tableWidth;  // Assuming 'tableWidth' is defined and accurate
+
+    // Create net geometry
+    const netGeometry = new THREE.PlaneGeometry(netLength, netHeight);
+    const net = new THREE.Mesh(netGeometry, netMaterial);
+    net.position.set(0, -tableHeight / 2 + netHeight / 2, 0);  // Ensure it's positioned at the middle of the table
+    net.rotation.y = Math.PI / 2;
+
+    // Add net to scene
+    scene.add(net);
+}, undefined, function(error) {
+    console.error("Error loading the texture:", error);
+});
 
     // Define materials and contact materials
     const bouncyMaterial = new CANNON.Material("bouncyMaterial");
@@ -146,6 +176,7 @@ loader.load('./beach_background.jpg', function(texture) {
     tableBody.material = tableMaterialCannon;
 
     // Ball setup
+    let initialBallPosition;
     const ballSpeed = 2; // Speed at which the ball should move
     const ballRadius = 0.02;
     const ballShape = new CANNON.Sphere(ballRadius);
@@ -157,7 +188,9 @@ loader.load('./beach_background.jpg', function(texture) {
         shininess: 100 
     });
     const ball = new THREE.Mesh(ballGeometry, ballMaterial);
-    ball.position.set(0, 1, 0);
+    initialBallPosition = new THREE.Vector3(paddle2.position.x, paddle2.position.y + handleLength + ballRadius, paddle2.position.z);
+ball.position.set(initialBallPosition.x, initialBallPosition.y, initialBallPosition.z);
+
     scene.add(ball);
     ballBody.addEventListener("collide", function(e) {
         console.log("Ball collided with", e.body);
@@ -267,12 +300,6 @@ function updateBallPosition() {
         ballBody.position.set(currentServingPaddle.position.x, currentServingPaddle.position.y + handleLength + ballRadius, currentServingPaddle.position.z);
     }
 }
-//Scoreboard
-function updateScoreboard() {
-    document.getElementById('Player1').textContent = scorePlayer1;
-    document.getElementById('Player2').textContent = scorePlayer2;
-}
-
 
 
 
@@ -292,7 +319,55 @@ function checkBallOutOfBounds() {
         resetBallAndPaddles(paddle1)
     }
     updateScoreboard();
+    if (scorePlayer1 >= 10 || scorePlayer2 >= 10) {
+        displayWinner(scorePlayer1 >= 10 ? "Player 1 Wins!" : "Player 2 Wins!");
+        showPlayAgainButton();
+    }
 }
+
+//Scoreboard and check for winner
+function updateScoreboard() {
+    document.getElementById('Player1').textContent = scorePlayer1;
+    document.getElementById('Player2').textContent = scorePlayer2;
+    
+    // Check if either player has won
+    if (scorePlayer1 >= 10 || scorePlayer2 >= 10) {
+        let winnerMessage = scorePlayer1 >= 10 ? "Player1 Wins!" : "Player2 Wins!";
+        displayWinner(winnerMessage);
+        showPlayAgainButton();
+    }
+}
+
+
+function displayWinner(winner) {
+    const winnerDiv = document.getElementById('winnerMessage');
+    const gameWinner = document.getElementById('gameWinner');  // Ensure this ID exists in your HTML
+    const playAgainButton = document.getElementById('playAgainButton');
+
+    if (winnerDiv && gameWinner && playAgainButton) {
+        gameWinner.textContent = winner;
+        winnerDiv.style.display = 'flex'; // Show the winner message
+        playAgainButton.style.display = 'block'; // Show the Play Again button
+    } else {
+        console.error("Some elements are missing in the HTML");
+    }
+}
+
+// This function could be improved by ensuring it only shows when needed
+function showPlayAgainButton() {
+    const playAgainButton = document.getElementById('playAgainButton');
+    if (playAgainButton) { // Check if the element exists
+        playAgainButton.style.display = 'block';
+        playAgainButton.onclick = function() {
+            resetGame();
+            document.getElementById('winnerMessage').style.display = 'none'; // Hide the winner message
+            playAgainButton.style.display = 'none'; // Hide button after clicking
+        };
+    } else {
+        console.error("Play Again button not found!");
+    }
+}
+
 
 
 function resetBallAndPaddles(paddle) {
@@ -305,7 +380,7 @@ function resetBallAndPaddles(paddle) {
     ballInPlay = false;
 
     // Reset paddles
-   paddleBody1.position.set(-1, 0, 0);
+    paddleBody1.position.set(-1, 0, 0);
     paddleBody2.position.set(1, 0, 0);
 }
 
@@ -335,7 +410,7 @@ function updatePhysics() {
 
 function resetGame() {
     // Reset the ball
-    ballBody.position.set(initialBallPosition.x, initialBallPosition.y, initialBallPosition.z);
+    ballBody.position.set(paddle2.position.x, paddle2.position.y + handleLength + ballRadius, paddle2.position.z);
     ballBody.velocity.set(0, 0, 0);
     ballBody.angularVelocity.set(0, 0, 0);
     ballBody.gravityScale = 0;
@@ -349,13 +424,23 @@ function resetGame() {
     scorePlayer1 = 0;
     scorePlayer2 = 0;
     updateScoreboard();
+    // Optionally hide the start menu if you use it when game restarts
+    document.getElementById('startMenu').style.display = 'none'; 
 }
 
 function backToHome() {
+    resetGame(); // This resets the game state
     document.getElementById('startMenu').style.display = 'flex'; // Show the start menu
-    // Optionally reset the game state if needed
-    resetGame(); // This would stop the game and reset any necessary states
 }
+document.addEventListener('DOMContentLoaded', () => {
+    const homeButton = document.getElementById('homeButton');
+    if (homeButton) {
+        homeButton.addEventListener('click', backToHome);
+    } else {
+        console.error('Back to Home button not found');
+    }
+});
+
 
 
 
@@ -383,13 +468,6 @@ document.getElementById('muteButton').addEventListener('click', function() {
     var bgMusic = document.getElementById('bgMusic');
     bgMusic.muted = !bgMusic.muted; // Toggle the muted state
     this.textContent = bgMusic.muted ? 'Unmute Music' : 'Mute/Unmute Music'; // Update button text
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    const homeButton = document.getElementById('backTo Home');
-    if(homeButton) {
-        homeButton.addEventListener('click', backToHome);
-    }
 });
 
 
