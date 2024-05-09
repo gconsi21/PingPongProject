@@ -1,5 +1,9 @@
 import * as THREE from 'https://unpkg.com/three/build/three.module.js';
 //import CANNON from 'https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js';
+let gameMode = false;
+let aiReactionTime = 20;
+let lastLaunchTime = 0;
+
 
 function init() {
     const existingCanvas = document.querySelector('canvas');
@@ -196,7 +200,7 @@ loader.load('./net.png', function(texture) {
 
     // Ball setup
     let initialBallPosition;
-    const ballSpeed = 2; // Speed at which the ball should move
+    const ballSpeed = 0.7; // Speed at which the ball should move
     const ballRadius = 0.02;
     const ballShape = new CANNON.Sphere(ballRadius);
     const ballBody = new CANNON.Body({ mass: 0.1, shape: ballShape });
@@ -252,7 +256,7 @@ paddleBody2.material = bouncyMaterial;
     }
     function updatePaddlePosition(deltaTime) {
         const paddleSpeed = 2; // meters per second
-    
+        if (!gameMode){
         if (keyStates['a']) {
             paddle1.position.z += paddleSpeed * deltaTime;
             paddleBody1.position.z = paddle1.position.z;
@@ -269,7 +273,7 @@ paddleBody2.material = bouncyMaterial;
             paddle1.position.y -= paddleSpeed * deltaTime;
             paddleBody1.position.y = paddle1.position.y;
         }
-    
+        }
         if (keyStates['ArrowLeft']) {
             paddle2.position.z += paddleSpeed * deltaTime;
             paddleBody2.position.z = paddle2.position.z;
@@ -302,6 +306,8 @@ document.addEventListener('keydown', function(event) {
 });
 
 function launchBall(currentServingPaddle) {
+    lastLaunchTime = Date.now();
+    ballInPlay = true;
     ballBody.gravityScale = 1;
     var launchSpeed;
     // Enable gravity when the ball is in play
@@ -318,6 +324,36 @@ function updateBallPosition() {
         // Position the ball at the correct serving position based on the current serving paddle
         ballBody.position.set(currentServingPaddle.position.x, currentServingPaddle.position.y + handleLength + ballRadius, currentServingPaddle.position.z);
     }
+}
+function updateAI(deltaTime) {
+    if (!gameMode || !ballInPlay || (Date.now() - lastLaunchTime < aiReactionTime)) {
+        return;
+    }
+    let aiPaddle = paddle1;
+    let aiPaddleBody = paddleBody1; 
+    let aiSpeedZ = 1;  // Speed for z-axis movement
+    let aiSpeedY = 1;  // Speed for y-axis movement
+
+    let targetZ = ball.position.z;  // Target z position is the ball's current z position
+    let targetY = ball.position.y;  // Target y position is the ball's current y position
+
+    // Update z position
+    if (aiPaddle.position.z < targetZ) {
+        aiPaddle.position.z += aiSpeedZ * deltaTime;
+    } else if (aiPaddle.position.z > targetZ) {
+        aiPaddle.position.z -= aiSpeedZ * deltaTime;
+    }
+
+    // Update y position
+    if (aiPaddle.position.y < targetY) {
+        aiPaddle.position.y += aiSpeedY * deltaTime;
+    } else if (aiPaddle.position.y > targetY) {
+        aiPaddle.position.y -= aiSpeedY * deltaTime;
+    }
+
+    // Apply the calculated positions to both the physics body and the visual mesh
+    aiPaddleBody.position.z = aiPaddle.position.z;
+    aiPaddleBody.position.y = aiPaddle.position.y;
 }
 
 
@@ -388,12 +424,12 @@ function showPlayAgainButton() {
 }
 
 
-
 function resetBallAndPaddles(paddle) {
     currentServingPaddle = paddle;
 
     // Reset the ball position near the specified paddle
-    ballBody.position.set(paddle.position.x - Math.sign(paddle.position.x) * 0.5, paddle.position.y + handleLength + ballRadius, paddle.position.z);
+    let ballStartPositionY = paddle.position.y + handleLength + rubberThickness / 2 + ballRadius;  // Adjusting this calculation
+    ballBody.position.set(paddle.position.x, ballStartPositionY, paddle.position.z);    
     ballBody.velocity.set(0, 0, 0);
     ballBody.gravityScale = 0; // Turn off gravity until the ball is launched again
     ballInPlay = false;
@@ -483,7 +519,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-
 function animate() {
     requestAnimationFrame(animate);
     renderer.render(scene, currentCamera);
@@ -491,24 +526,48 @@ function animate() {
     updatePaddlePosition(deltaTime);
     updateBallPosition(); // Keep the ball with the paddle until launch
     updatePhysics();
+    if (gameMode) {
+        updateAI(deltaTime); // Update AI control if AI is enabled
+    }
+    updatePhysics(); // Update physics and render the scene
+    renderer.render(scene, currentCamera);
 }
-
     animate();
+    
 }
-
-
-
-document.getElementById('startButton').addEventListener('click', function() {
-    document.getElementById('startMenu').style.display = 'none';
-    init(); // Start game initialization
-});
 
 document.getElementById('muteButton').addEventListener('click', function() {
     var bgMusic = document.getElementById('bgMusic');
     bgMusic.muted = !bgMusic.muted; // Toggle the muted state
     this.textContent = bgMusic.muted ? 'Unmute Music' : 'Mute/Unmute Music'; // Update button text
 });
+document.addEventListener('DOMContentLoaded', function() {
+    const startOnePlayerButton = document.getElementById('startOnePlayer');
+    const startTwoPlayerButton = document.getElementById('startTwoPlayer');
 
+    if (startOnePlayerButton && startTwoPlayerButton) {
+        startOnePlayerButton.addEventListener('click', function() {
+            console.log("1 Player Game button clicked");
+            startGame(true);
+        });
+
+        startTwoPlayerButton.addEventListener('click', function() {
+            console.log("2 Player Game button clicked");
+            startGame(false);
+        });
+    } else {
+        console.log("Buttons not found, check HTML IDs and button placement.");
+    }
+});
+
+
+function startGame(isOnePlayer) {
+    console.log("Game mode: " + (isOnePlayer ? "1 Player" : "2 Player"));
+    document.getElementById('startMenu').style.display = 'none';
+    init();
+    gameMode = isOnePlayer;  // Properly using the declared variable
+    console.log("Game mode set to: " + (gameMode ? "One Player" : "Two Player"));
+}
 
 
 

@@ -32,7 +32,7 @@
             align-items: center;
             color: white;
         }
-        #startButton, #playAgainButton, #muteButton, #homeButton, #cameraButton {
+        #startOnePlayer, #startTwoPlayer, #playAgainButton, #muteButton, #homeButton, #cameraButton {
             padding: 10px 20px;
             font-size: 16px;
             color: #fff;
@@ -42,7 +42,7 @@
             cursor: pointer;
             outline: none;
         }
-        #startButton:hover, #playAgainButton:hover, #muteButton:hover, #homeButton:hover, #cameraButton:hover {
+        #startOnePlayer:hover, #startTwoPlayer:hover, #playAgainButton:hover, #muteButton:hover, #homeButton:hover, #cameraButton:hover {
             background-color: #0056b3;
         }
         #muteButton, #homeButton, #cameraButton {
@@ -73,15 +73,23 @@
         <audio id="bgMusic" autoplay loop>
             <source src="./Wii-music.mp3" type="audio/mp3">
         </audio>
-        <button id="startButton">Start Game</button>
+        <button id="startOnePlayer" onclick="console.log('1 Player button clicked'); ">1 Player Game</button>
+        <button id="startTwoPlayer" onclick="console.log('2 Player button clicked'); ">2 Player Game</button>
+
     </div>
     <div id="winnerMessage">
         <h1 id = "gameWinner"></h1>
         <button id="playAgainButton" style="display: none;">Play Again</button>
     </div>
+    <script>
+        function switchCamera() {
+            console.log("Switch camera called");
+            // Logic to switch camera
+        }
+        </script>
     <button id="cameraButton">Switch View</button>
     <button id="homeButton">Back to Home</button>
-    <button id="muteButton" onclick="toggleMute()">Mute/Unmute Music</button>
+    <button id="muteButton">Mute/Unmute Music</button>
     <div id="scoreboard" style="position: absolute; top: 10px; width: 100%; text-align: center; font-size: 24px; color: white;">
         Player1: <span id="Player1">0</span> - <span id="Player2">0</span> : Player2
     </div>
