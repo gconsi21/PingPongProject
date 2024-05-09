@@ -3,7 +3,7 @@ import * as THREE from 'https://unpkg.com/three/build/three.module.js';
 let gameMode = false;
 let aiReactionTime = 20;
 let lastLaunchTime = 0;
-
+let hasBallHitTable = false;
 
 function init() {
     const existingCanvas = document.querySelector('canvas');
@@ -53,7 +53,7 @@ function init() {
 
     // Physics world setup
     const world = new CANNON.World();
-    world.gravity.set(0, 0, 0);
+    world.gravity.set(0, -0.1, 0);
     world.broadphase = new CANNON.NaiveBroadphase();
 
     const loader = new THREE.TextureLoader();
@@ -183,8 +183,8 @@ loader.load('./net.png', function(texture) {
     const bouncyMaterial = new CANNON.Material("bouncyMaterial");
     const tableMaterialCannon = new CANNON.Material("tableMaterial");
     const bouncyContactMaterial = new CANNON.ContactMaterial(bouncyMaterial, bouncyMaterial, {
-        restitution: 2,
-        friction: 0.0
+        restitution: 0.9,
+        friction: 0.2
     });
     const tableContactMaterial = new CANNON.ContactMaterial(tableMaterialCannon, bouncyMaterial, {
         restitution: 0.7,
@@ -198,12 +198,15 @@ loader.load('./net.png', function(texture) {
     // Apply materials to bodies
     tableBody.material = tableMaterialCannon;
 
+    
     // Ball setup
     let initialBallPosition;
     const ballSpeed = 0.7; // Speed at which the ball should move
     const ballRadius = 0.02;
     const ballShape = new CANNON.Sphere(ballRadius);
-    const ballBody = new CANNON.Body({ mass: 0.1, shape: ballShape });
+    const ballBody = new CANNON.Body({ mass: 0.02, shape: ballShape });
+    ballBody.allowSleep = true;
+    ballBody.sleep();
     const ballGeometry = new THREE.SphereGeometry(ballRadius, 32, 32);
     const ballMaterial = new THREE.MeshPhongMaterial({ 
         color: 0xFFFFFF,
@@ -216,7 +219,10 @@ ball.position.set(initialBallPosition.x, initialBallPosition.y, initialBallPosit
 
     scene.add(ball);
     ballBody.addEventListener("collide", function(e) {
-        console.log("Ball collided with", e.body);
+        if (e.body === tableBody) {
+            hasBallHitTable = true;
+            console.log("Ball has hit the table");
+        }
     
         const velocityLength = ballBody.velocity.length();
     if (velocityLength !== 0) {
@@ -306,8 +312,10 @@ document.addEventListener('keydown', function(event) {
 });
 
 function launchBall(currentServingPaddle) {
+    hasBallHitTable = false;
     lastLaunchTime = Date.now();
     ballInPlay = true;
+    ballBody.wakeUp();
     ballBody.gravityScale = 1;
     var launchSpeed;
     // Enable gravity when the ball is in play
@@ -359,19 +367,34 @@ function updateAI(deltaTime) {
 
 
 function checkBallOutOfBounds() {
+    //check to see if the ball hits the table to award point
+    if ((ballBody.position.x > tableLength / 2 || ballBody.position.x < -tableLength / 2) && !hasBallHitTable) {
+        if (currentServingPaddle === paddle1) {
+            scorePlayer2++;
+            resetBallAndPaddles(paddle2)
+            ballBody.sleep();
+        } else {
+            scorePlayer1++;
+            resetBallAndPaddles(paddle1)
+            ballBody.sleep();
+        }
     // Check if the ball falls off the ends of the table where the paddles are located
-    if (ballBody.position.x > 2) {
+    } else if (ballBody.position.x > 2) {
         scorePlayer1++;
         // Ball went out on the side of paddle2
         resetBallAndPaddles(paddle1); // Reset to the opposite side, which is paddle1
+        ballBody.sleep();
     } else if (ballBody.position.x < -2) {
         // Ball went out on the side of paddle1
         scorePlayer2++;
         resetBallAndPaddles(paddle2); // Reset to the opposite side, which is paddle2
+        ballBody.sleep();
     } else if (ballBody.position.z > 5) {
         resetBallAndPaddles(paddle1)
+        ballBody.sleep();
     } else if (ballBody.position.z < -5) {
         resetBallAndPaddles(paddle1)
+        ballBody.sleep();
     }
     updateScoreboard();
     if (scorePlayer1 >= 10 || scorePlayer2 >= 10) {
@@ -386,8 +409,8 @@ function updateScoreboard() {
     document.getElementById('Player2').textContent = scorePlayer2;
     
     // Check if either player has won
-    if (scorePlayer1 >= 10 || scorePlayer2 >= 10) {
-        let winnerMessage = scorePlayer1 >= 10 ? "Player1 Wins!" : "Player2 Wins!";
+    if ((scorePlayer1 >= 11 || scorePlayer2 >= 11) && Math.abs(scorePlayer1 - scorePlayer2) >= 2) {
+        let winnerMessage = scorePlayer1 >= 11 ? "Player1 Wins!" : "Player2 Wins!";
         displayWinner(winnerMessage);
         showPlayAgainButton();
     }
