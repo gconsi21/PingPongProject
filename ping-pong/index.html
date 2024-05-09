@@ -32,7 +32,7 @@
             align-items: center;
             color: white;
         }
-        #startOnePlayer, #startTwoPlayer, #playAgainButton, #muteButton, #homeButton, #cameraButton {
+        #startOnePlayer, #startTwoPlayer, #playAgainButton, #muteButton, #homeButton, #cameraButton, #backgroundButton{
             padding: 10px 20px;
             font-size: 16px;
             color: #fff;
@@ -42,10 +42,10 @@
             cursor: pointer;
             outline: none;
         }
-        #startOnePlayer:hover, #startTwoPlayer:hover, #playAgainButton:hover, #muteButton:hover, #homeButton:hover, #cameraButton:hover {
+        #startOnePlayer:hover, #startTwoPlayer:hover, #playAgainButton:hover, #muteButton:hover, #homeButton:hover, #cameraButton:hover, #backgroundButton:hover {
             background-color: #0056b3;
         }
-        #muteButton, #homeButton, #cameraButton {
+        #muteButton, #homeButton, #cameraButton{
             position: fixed;
             top: 20px;
             right: 20px;
@@ -58,6 +58,11 @@
         }
         #cameraButton {
             right: 350px;
+        }
+        #backgroundButton{
+            position: fixed;
+            bottom: 20px;
+            right: 10px; 
         }
         #winnerMessage {
             display: none; /* Hidden by default */
@@ -90,6 +95,7 @@
     <button id="cameraButton">Switch View</button>
     <button id="homeButton">Back to Home</button>
     <button id="muteButton">Mute/Unmute Music</button>
+    <button id="backgroundButton">Toggle Background</button>
     <div id="scoreboard" style="position: absolute; top: 10px; width: 100%; text-align: center; font-size: 24px; color: white;">
         Player1: <span id="Player1">0</span> - <span id="Player2">0</span> : Player2
     </div>

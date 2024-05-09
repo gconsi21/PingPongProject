@@ -486,6 +486,32 @@ function updatePhysics() {
     checkBallOutOfBounds();
 }
 
+// Preload backgrounds
+const backgrounds = ['./beach_background.jpg', './city_background.jpg'];
+let currentBackgroundIndex = 0;  // Start with the first background
+
+function toggleBackground() {
+    const backgrounds = ['./beach_background.jpg', './city_background.jpg'];
+    currentBackgroundIndex = (currentBackgroundIndex + 1) % backgrounds.length;
+    document.body.style.backgroundImage = `url('${backgrounds[currentBackgroundIndex]}')`;
+    console.log("Background switched to:", backgrounds[currentBackgroundIndex]);
+}
+
+
+
+// Setup event listener for the background toggle button
+document.addEventListener('DOMContentLoaded', function() {
+    const backgroundButton = document.getElementById('backgroundButton');
+    if (backgroundButton) {
+        backgroundButton.addEventListener('click', toggleBackground);
+        console.log('Event listener attached to background toggle button.');
+    } else {
+        console.log('Background toggle button not found.');
+    }
+});
+
+
+
 function resetGame() {
     // Reset the ball
     ballBody.position.set(paddle2.position.x, paddle2.position.y + handleLength + ballRadius, paddle2.position.z);
