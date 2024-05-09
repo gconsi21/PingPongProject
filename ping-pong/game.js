@@ -57,9 +57,23 @@ function init() {
     world.broadphase = new CANNON.NaiveBroadphase();
 
     const loader = new THREE.TextureLoader();
-loader.load('./beach_background.jpg', function(texture) {
-    scene.background = texture;  // This sets the texture as the background of the scene
-});
+    loader.load('./beach_background.jpg', function(texture) {
+        scene.background = texture;  // This sets the texture as the background of the scene
+    });
+    let backgrounds = [
+        './beach_background.jpg',
+        './city_background.jpg',
+        './wii_background.jpg'
+    ];
+    let currentBackgroundIndex = 1;
+    document.getElementById('backgroundButton').addEventListener('click', function() {
+        currentBackgroundIndex++; 
+        if (currentBackgroundIndex >= backgrounds.length){
+            currentBackgroundIndex = 0;
+        }
+        scene.background = loader.load(backgrounds[currentBackgroundIndex]);  // Load and set the new background
+        console.log("Background toggled to: " + backgrounds[currentBackgroundIndex]);
+    });
 
     // Paddle Material
     const rubberTexture = loader.load('rubber_texture.jpg');
@@ -486,16 +500,7 @@ function updatePhysics() {
     checkBallOutOfBounds();
 }
 
-// Preload backgrounds
-const backgrounds = ['./beach_background.jpg', './city_background.jpg'];
-let currentBackgroundIndex = 0;  // Start with the first background
 
-function toggleBackground() {
-    const backgrounds = ['./beach_background.jpg', './city_background.jpg'];
-    currentBackgroundIndex = (currentBackgroundIndex + 1) % backgrounds.length;
-    document.body.style.backgroundImage = `url('${backgrounds[currentBackgroundIndex]}')`;
-    console.log("Background switched to:", backgrounds[currentBackgroundIndex]);
-}
 
 
 
